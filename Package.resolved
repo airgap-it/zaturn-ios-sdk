@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "ShamirSecretShare",
+        "repositoryURL": "https://github.com/kryptco/SecretShare.swift",
+        "state": {
+          "branch": null,
+          "revision": "789a545b441abbb7c8c0800b66f8c9b96e6eec3b",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "package": "Sodium",
+        "repositoryURL": "https://github.com/jedisct1/swift-sodium.git",
+        "state": {
+          "branch": null,
+          "revision": "4f9164a0a2c9a6a7ff53a2833d54a5c79c957342",
+          "version": "0.9.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
