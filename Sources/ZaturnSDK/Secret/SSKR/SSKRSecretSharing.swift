@@ -15,7 +15,7 @@ struct SSKRSecretSharing: SecretSharing {
     
     private let shamir: Shamir
     
-    init(shamir: Shamir = .init()) {
+    init(shamir: Shamir = ShamirCreator.create()) {
         self.shamir = shamir
     }
     

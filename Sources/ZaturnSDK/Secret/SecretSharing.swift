@@ -16,7 +16,3 @@ struct SecretSharingGroup {
     let members: Int
     let memberThreshold: Int
 }
-
-enum SecretSharingError {
-    
-}
