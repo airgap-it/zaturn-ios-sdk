@@ -17,6 +17,7 @@ public class Zaturn {
             return ZaturnNode(id: $0.absoluteString, http: http)
         }
         let crypto = SodiumCrypto()
+        
         let secretSharing = SSKRSecretSharing()
         let shareConfiguration = ShareConfiguration(
             groups: min(nodes.count, Defaults.minGroups),
