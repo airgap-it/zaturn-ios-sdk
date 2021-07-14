@@ -11,6 +11,7 @@ Pod::Spec.new do |spec|
   spec.source_files          = "Sources/**/*.{swift}"
   spec.dependency            'Sodium', '~> 0.9.1'
   spec.dependency            'SwiftySSS', '~> 0.0.1'
+  spec.dependency            'GoogleSignIn', '~> 6.0.0'
   
   spec.compiler_flags        = '-Xswiftc COCOAPODS'
 end
