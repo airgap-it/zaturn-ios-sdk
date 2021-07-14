@@ -2,6 +2,7 @@ import Foundation
 
 public class Zaturn {
     private let nodes: [ZaturnNode]
+    private let oAuth: OAuth
     private let crypto: Crypto
     private let secretSharing: SecretSharing
     private let shareConfiguration: ShareConfiguration
@@ -16,6 +17,7 @@ public class Zaturn {
             
             return ZaturnNode(id: $0.absoluteString, http: http)
         }
+        let oAuth = OAuth()
         let crypto = SodiumCrypto()
         
         let secretSharing = SSKRSecretSharing()
@@ -28,11 +30,12 @@ public class Zaturn {
 
         try shareConfiguration.validate()
         
-        self.init(nodes: nodes, crypto: crypto, secretSharing: secretSharing, shareConfiguration: shareConfiguration)
+        self.init(nodes: nodes, oAuth: oAuth, crypto: crypto, secretSharing: secretSharing, shareConfiguration: shareConfiguration)
     }
     
-    init(nodes: [ZaturnNode], crypto: Crypto, secretSharing: SecretSharing, shareConfiguration: ShareConfiguration) {
+    init(nodes: [ZaturnNode], oAuth: OAuth, crypto: Crypto, secretSharing: SecretSharing, shareConfiguration: ShareConfiguration) {
         self.nodes = nodes
+        self.oAuth = oAuth
         self.crypto = crypto
         self.secretSharing = secretSharing
         self.shareConfiguration = shareConfiguration
@@ -41,6 +44,16 @@ public class Zaturn {
     public func getNonce() throws -> String {
         try catchInternal {
             try getKeyPair().publicKey.encodeBase64()
+        }
+    }
+    
+    public func getOAuthToken(from provider: OAuthProvider, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+        do {
+            oAuth.signIn(nonce: try getNonce(), using: provider) { result in
+                completion(result.mapError { Error($0) })
+            }
+        } catch {
+            completion(.failure(Error(error)))
         }
     }
     
