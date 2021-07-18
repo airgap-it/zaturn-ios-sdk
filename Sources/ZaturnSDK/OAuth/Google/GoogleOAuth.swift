@@ -7,7 +7,11 @@
 
 import Foundation
 import UIKit
+#if COCOAPODS
+import AdvancedGoogleSignIn
+#else
 import GoogleSignIn
+#endif
 
 struct GoogleOAuth {
     static let shared: GoogleOAuth = .init()
@@ -32,7 +36,7 @@ struct GoogleOAuth {
                 completion(.failure(Error.missingUser))
                 return
             }
-            
+
             user.authentication.do(freshTokens: { authentication, error in
                 guard error == nil else {
                     completion(.failure(Error.googleSignInError(error!)))
