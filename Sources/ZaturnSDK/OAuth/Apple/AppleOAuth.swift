@@ -15,9 +15,19 @@ class AppleOAuth {
     
     private init() {}
     
-    func signIn(usingNonce nonce: String, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+    func signIn(
+        with requestedOperation: ASAuthorization.OpenIDOperation?,
+        for requestedScopes: [ASAuthorization.Scope],
+        usingNonce nonce: String,
+        completion: @escaping (Result<String, Swift.Error>) -> ()
+    ) {
         let appleIDProvider = ASAuthorizationAppleIDProvider()
+        
         let request = appleIDProvider.createRequest()
+        if let requestedOperation = requestedOperation {
+            request.requestedOperation = requestedOperation
+        }
+        request.requestedScopes = requestedScopes
         request.nonce = nonce
         
         let delegate = createDelegate(completingWith: completion)
