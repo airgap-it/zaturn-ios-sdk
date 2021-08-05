@@ -8,6 +8,6 @@
 import Foundation
 
 public enum OAuthProvider {
-    case apple
+    case apple(AppleOAuthConfiguration = .init())
     case google(GoogleOAuthConfiguration)
 }
