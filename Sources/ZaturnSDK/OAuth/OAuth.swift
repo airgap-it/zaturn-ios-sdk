@@ -13,8 +13,8 @@ struct OAuth {
     
     func signIn(nonce: String, using provider: OAuthProvider, completion: @escaping (Result<String, Swift.Error>) -> ()) {
         switch provider {
-        case .apple:
-            appleOAuth.signIn(usingNonce: nonce, completion: completion)
+        case let .apple(configuration):
+            appleOAuth.signIn(with: configuration.requestedOperation, for: configuration.requestedScopes, usingNonce: nonce, completion: completion)
         case let .google(configuration):
             guard let viewController = configuration.viewController else {
                 completion(.failure(Error.missingPresentingViewController))
@@ -24,6 +24,7 @@ struct OAuth {
             googleOAuth.signIn(
                 withClientID: configuration.clientID,
                 andServerClientID: configuration.serverClientID,
+                forScopes: configuration.scopes,
                 usingNonce: nonce,
                 preseting: viewController,
                 completion: completion
