@@ -26,7 +26,7 @@ struct GoogleOAuth {
         forScopes scopes: [String],
         usingNonce nonce: String,
         preseting viewController: UIViewController,
-        completion: @escaping (Result<String, Swift.Error>) -> ()
+        completion: @escaping (Result<OAuthID, Swift.Error>) -> ()
     ) {
         // As of 6.0.0, only basic profile scopes (i.e. "openid", "email" and "profile") are requested with an initial `GIDSignIn#signIn` call.
         // Other scopes have to be requested separately after a successful sign-in with an additional `GIDSignIn#addScopes` call.
@@ -50,11 +50,15 @@ struct GoogleOAuth {
                 return
             }
             
-            self.getIDToken(from: user, completion: completion)
+            self.getID(from: user, completion: completion)
         }
     }
     
-    private func requestAdvancedScopes(_ scopes: [String], presenting viewController: UIViewController, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+    private func requestAdvancedScopes(
+        _ scopes: [String],
+        presenting viewController: UIViewController,
+        completion: @escaping (Result<OAuthID, Swift.Error>) -> ()
+    ) {
         GIDSignIn.sharedInstance.addScopes(scopes, presenting: viewController) { user, error in
             guard error == nil else {
                 completion(.failure(Error.googleSignInError(error!)))
@@ -66,23 +70,23 @@ struct GoogleOAuth {
                 return
             }
             
-            self.getIDToken(from: user, completion: completion)
+            self.getID(from: user, completion: completion)
         }
     }
     
-    private func getIDToken(from user: GIDGoogleUser, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+    private func getID(from user: GIDGoogleUser, completion: @escaping (Result<OAuthID, Swift.Error>) -> ()) {
         user.authentication.do(freshTokens: { authentication, error in
             guard error == nil else {
                 completion(.failure(Error.googleSignInError(error!)))
                 return
             }
             
-            guard let idToken = authentication?.idToken else {
-                completion(.failure(Error.missingIDToken))
-                return
+            do {
+                let id = try user.toOAuthID()
+                completion(.success(id))
+            } catch {
+                completion(.failure(error))
             }
-            
-            completion(.success(idToken))
         })
     }
     
@@ -92,7 +96,6 @@ struct GoogleOAuth {
         case googleSignInError(Swift.Error)
         
         case missingUser
-        case missingIDToken
     }
     
     enum Scope: String {
