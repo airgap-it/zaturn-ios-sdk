@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if COCOAPODS
+import AdvancedGoogleSignIn
+#else
 import GoogleSignIn
+#endif
 
 extension GIDGoogleUser {
     func toOAuthID() throws -> OAuthID {
