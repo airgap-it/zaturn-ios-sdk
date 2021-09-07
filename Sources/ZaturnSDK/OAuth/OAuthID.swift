@@ -7,16 +7,16 @@
 
 import Foundation
 
-public struct OAuthID {
-    let accessToken: String?
-    let expiresIn: Date?
-    let idToken: String
-    let scope: String?
-    let tokenType: String?
-    let refreshToken: String?
-    let additional: [String: String]
+public struct OAuthID: Codable {
+    public let accessToken: String?
+    public let expiresIn: Date?
+    public let idToken: String
+    public let scope: String?
+    public let tokenType: String?
+    public let refreshToken: String?
+    public let additional: [String: String]
     
-    init(
+    public init(
         accessToken: String? = nil,
         expiresIn: Date? = nil,
         idToken: String,
