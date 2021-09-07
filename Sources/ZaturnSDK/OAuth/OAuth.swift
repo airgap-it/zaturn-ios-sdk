@@ -11,7 +11,7 @@ struct OAuth {
     private var appleOAuth: AppleOAuth { .shared }
     private var googleOAuth: GoogleOAuth { .shared }
     
-    func signIn(nonce: String, using provider: OAuthProvider, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+    func signIn(nonce: String, using provider: OAuthProvider, completion: @escaping (Result<OAuthID, Swift.Error>) -> ()) {
         switch provider {
         case let .apple(configuration):
             appleOAuth.signIn(with: configuration.requestedOperation, for: configuration.requestedScopes, usingNonce: nonce, completion: completion)

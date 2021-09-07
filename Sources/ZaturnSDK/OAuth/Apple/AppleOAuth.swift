@@ -19,7 +19,7 @@ class AppleOAuth {
         with requestedOperation: ASAuthorization.OpenIDOperation?,
         for requestedScopes: [ASAuthorization.Scope],
         usingNonce nonce: String,
-        completion: @escaping (Result<String, Swift.Error>) -> ()
+        completion: @escaping (Result<OAuthID, Swift.Error>) -> ()
     ) {
         let appleIDProvider = ASAuthorizationAppleIDProvider()
         
@@ -38,7 +38,7 @@ class AppleOAuth {
         authorizationController.performRequests()
     }
     
-    private func createDelegate(completingWith completion: @escaping (Result<String, Swift.Error>) -> ()) -> AppleOAuthDelegate {
+    private func createDelegate(completingWith completion: @escaping (Result<OAuthID, Swift.Error>) -> ()) -> AppleOAuthDelegate {
         let delegateID = UUID().uuidString
         let delegate = AppleOAuthDelegate { [weak self] result in
             do {
@@ -46,19 +46,11 @@ class AppleOAuth {
                     self?.delegates.removeValue(forKey: delegateID)
                 }
                 
-                switch result {
-                case let .success(appleIDCredential):
-                    guard let identityToken = appleIDCredential?.identityToken else {
-                        throw Error.missingToken
-                    }
-                    guard let identityToken = String(data: identityToken, encoding: .utf8) else {
-                        throw Error.tokenConversionFailed
-                    }
-                    completion(.success(identityToken))
-                case let .failure(error):
-                    throw error
+                guard let id = try result.get()?.toOAuthID() else {
+                    throw Error.missingAppleID
                 }
-                
+                 
+                completion(.success(id))
             } catch {
                 completion(.failure(error))
             }
@@ -71,7 +63,6 @@ class AppleOAuth {
     // MARK: Types
     
     enum Error: Swift.Error {
-        case missingToken
-        case tokenConversionFailed
+        case missingAppleID
     }
 }
