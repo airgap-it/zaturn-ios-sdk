@@ -47,7 +47,7 @@ public class Zaturn {
         }
     }
     
-    public func getOAuthToken(from provider: OAuthProvider, completion: @escaping (Result<String, Swift.Error>) -> ()) {
+    public func getOAuthToken(from provider: OAuthProvider, completion: @escaping (Result<OAuthID, Swift.Error>) -> ()) {
         do {
             oAuth.signIn(nonce: try getNonce(), using: provider) { result in
                 completion(result.mapError { Error($0) })
