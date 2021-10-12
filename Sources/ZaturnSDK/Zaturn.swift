@@ -57,10 +57,10 @@ public class Zaturn {
         }
     }
     
-    public func setupRecovery(forSecret secret: [UInt8], usingId id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
+    public func setupRecovery(forSecret secret: [UInt8], usingID id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
         do {
             let parts = try splitSecret(secret)
-            storeRecoveryParts(parts, forId: id, authorizedWith: token) { result in
+            storeRecoveryParts(parts, forID: id, authorizedWith: token) { result in
                 completion(result.mapError { Error($0) })
             }
         } catch {
@@ -68,8 +68,8 @@ public class Zaturn {
         }
     }
     
-    public func recover(forId id: String, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
-        retrieveRecoveryParts(forId: id, authorizedWith: token) { result in
+    public func recover(forID id: String, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
+        retrieveRecoveryParts(forID: id, authorizedWith: token) { result in
             guard let parts = result.mapError({ Error($0) }).get(ifFailure: completion) else { return }
             
             do {
@@ -149,12 +149,12 @@ public class Zaturn {
         }
     }
     
-    private func storeRecoveryParts(_ parts: [[[UInt8]]], forId id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
+    private func storeRecoveryParts(_ parts: [[[UInt8]]], forID id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
         Array(zip(nodes, parts)).forEachAsync(body: { nodeWithParts, singleCompletion in
             let (node, parts) = nodeWithParts
             self.encryptParts(parts, for: node) { result in
                 guard let encrypted = result.get(ifFailure: singleCompletion) else { return }
-                node.store(recoveryParts: encrypted, forId: id, authorizedWith: token, completion: singleCompletion)
+                node.store(recoveryParts: encrypted, forID: id, authorizedWith: token, completion: singleCompletion)
             }
         }, completion: { (results: [Result<(), Swift.Error>]) in
             guard results.allSatisfy({ $0.isSuccess }) else {
@@ -166,9 +166,9 @@ public class Zaturn {
         })
     }
     
-    private func retrieveRecoveryParts(forId id: String, authorizedWith token: String, completion: @escaping (Result<[[[UInt8]]], Swift.Error>) -> ()) {
+    private func retrieveRecoveryParts(forID id: String, authorizedWith token: String, completion: @escaping (Result<[[[UInt8]]], Swift.Error>) -> ()) {
         nodes.forEachAsync(body: { node, singleCompletion in
-            node.retrieve(numberOfRecoveryParts: self.shareConfiguration.groupMembers, forId: id, authorizedWith: token) { result in
+            node.retrieve(numberOfRecoveryParts: self.shareConfiguration.groupMembers, forID: id, authorizedWith: token) { result in
                 guard let encrypted = result.get(ifFailure: singleCompletion) else { return }
                 self.decryptParts(encrypted, for: node, completion: singleCompletion)
             }
