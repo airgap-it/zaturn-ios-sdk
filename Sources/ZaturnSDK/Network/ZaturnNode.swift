@@ -25,9 +25,9 @@ struct ZaturnNode {
         }
     }
     
-    func store(recoveryParts parts: [[UInt8]], forId id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
+    func store(recoveryParts parts: [[UInt8]], forID id: String, authorizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
         parts.forEachAsync(body: { part, offset, partCompletion in
-            store(recoveryPart: part, forId: id, withOffset: offset, authroizedWith: token, completion: partCompletion)
+            store(recoveryPart: part, forID: id, withOffset: offset, authroizedWith: token, completion: partCompletion)
         }, completion: { results in
             guard results.allSatisfy({ $0.isSuccess }) else {
                 completion(.failure(self.getNodeError(from: results)))
@@ -38,7 +38,7 @@ struct ZaturnNode {
         })
     }
     
-    private func store(recoveryPart part: [UInt8], forId id: String, withOffset offset: Int, authroizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
+    private func store(recoveryPart part: [UInt8], forID id: String, withOffset offset: Int, authroizedWith token: String, completion: @escaping (Result<(), Swift.Error>) -> ()) {
         http.post(
             at: "/storage/\(id)-\(offset)",
             body: StoreRecoveryPartRequest(data: part),
@@ -48,9 +48,9 @@ struct ZaturnNode {
         }
     }
     
-    func retrieve(numberOfRecoveryParts partsCount: Int, forId id: String, authorizedWith token: String, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
+    func retrieve(numberOfRecoveryParts partsCount: Int, forID id: String, authorizedWith token: String, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
         Array((0..<partsCount)).forEachAsync(body: { offset, partCompletion in
-            retrieveRecoveryPart(forId: id, withOffset: offset, authorizedWith: token, completion: partCompletion)
+            retrieveRecoveryPart(forID: id, withOffset: offset, authorizedWith: token, completion: partCompletion)
         }, completion: { results in
             guard results.allSatisfy({ $0.isSuccess }) else {
                 completion(.failure(self.getNodeError(from: results)))
@@ -62,7 +62,7 @@ struct ZaturnNode {
         })
     }
     
-    private func retrieveRecoveryPart(forId id: String, withOffset offset: Int, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
+    private func retrieveRecoveryPart(forID id: String, withOffset offset: Int, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
         http.get(
             at: "/storage/\(id)-\(offset)",
             headers: [.authorization(token)]
