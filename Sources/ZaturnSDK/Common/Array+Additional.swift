@@ -20,6 +20,10 @@ extension Array {
         }
     }
     
+    func count(matching predicate: (Element) -> Bool) -> Int {
+        reduce(0) { (acc, next) in acc + (predicate(next) ? 1 : 0) }
+    }
+    
     func forEachAsync<T>(
         with group: DispatchGroup = .init(),
         body: @escaping (Element, @escaping (T) -> ()) -> (),

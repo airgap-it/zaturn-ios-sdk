@@ -31,7 +31,7 @@ struct GoogleOAuth {
         // As of 6.0.0, only basic profile scopes (i.e. "openid", "email" and "profile") are requested with an initial `GIDSignIn#signIn` call.
         // Other scopes have to be requested separately after a successful sign-in with an additional `GIDSignIn#addScopes` call.
         // This behaviour, however, has been a subject of discussion (https://github.com/google/GoogleSignIn-iOS/issues/23) and may change in future releases.
-        let advancedScopes = scopes.filter { basicScopes.contains($0) }
+        let advancedScopes = scopes.filter { !basicScopes.contains($0) }
         let configuration = GIDConfiguration(clientID: clientID, serverClientID: serverClientID, hostedDomain: nil, openIDRealm: nil, nonce: nonce)
         
         GIDSignIn.sharedInstance.signIn(with: configuration, presenting: viewController) { user, error in

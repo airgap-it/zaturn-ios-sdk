@@ -48,6 +48,21 @@ struct ZaturnNode {
         }
     }
     
+    func check(numberOfRecoveryParts partsCount: Int, forID id: String, authorizedWith token: String, completion: @escaping ([Bool]) -> ()) {
+        Array((0..<partsCount)).forEachAsync(body: { offset, partCompletion in
+            check(forID: id, withOffset: offset, authorizedWith: token, completion: partCompletion)
+        }, completion: completion)
+    }
+    
+    private func check(forID id: String, withOffset offset: Int, authorizedWith token: String, completion: @escaping (Bool) -> ()) {
+        http.head(
+            at: "/storage/\(id)-\(offset)",
+            headers: [.authorization(token)]
+        ) { (result: Result<CheckRecoveryPartResponse, Swift.Error>) in
+            completion(result.isSuccess)
+        }
+    }
+    
     func retrieve(numberOfRecoveryParts partsCount: Int, forID id: String, authorizedWith token: String, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
         Array((0..<partsCount)).forEachAsync(body: { offset, partCompletion in
             retrieveRecoveryPart(forID: id, withOffset: offset, authorizedWith: token, completion: partCompletion)
