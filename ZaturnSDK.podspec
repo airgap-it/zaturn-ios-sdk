@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name                  = "ZaturnSDK"
-  spec.version               = "0.0.5"
+  spec.version               = "0.0.6"
   spec.summary               = "."
   spec.homepage              = "https://github.com/airgap-it/zaturn-ios-sdk"
   spec.license               = { :type => "MIT", :file => "LICENSE" }
