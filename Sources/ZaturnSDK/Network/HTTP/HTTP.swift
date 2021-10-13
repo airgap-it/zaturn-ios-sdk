@@ -25,7 +25,7 @@ class HTTP {
         do {
             var request = try createRequest(for: .get, at: path, parameters: parameters)
             request.set(headers: headers)
-            send(request: request, completion: completion)
+            send(request, completion: completion)
         } catch {
             completion(.failure(Error(error)))
         }
@@ -43,7 +43,22 @@ class HTTP {
             let encoder = JSONEncoder()
             request.httpBody = try encoder.encode(body)
             request.set(headers: headers + [.contentType("application/json")])
-            send(request: request, completion: completion)
+            send(request, completion: completion)
+        } catch {
+            completion(.failure(Error(error)))
+        }
+    }
+    
+    func head<R: Codable>(
+        at path: String,
+        headers: [Header] = [],
+        parameters: [(String, String?)] = [],
+        completion: @escaping (Result<R, Swift.Error>) -> ()
+    ) {
+        do {
+            var request = try createRequest(for: .head, at: path, parameters: parameters)
+            request.set(headers: headers)
+            send(request, completion: completion)
         } catch {
             completion(.failure(Error(error)))
         }
@@ -68,7 +83,7 @@ class HTTP {
         return request
     }
     
-    private func send<R: Codable>(request: URLRequest, completion: @escaping (Result<R, Swift.Error>) -> ()) {
+    private func send<R: Codable>(_ request: URLRequest, completion: @escaping (Result<R, Swift.Error>) -> ()) {
         let dataTask = session.dataTask(with: request) { [weak self] result in
             guard let selfStrong = self else {
                 completion(.failure(Error.unknown))
@@ -109,6 +124,7 @@ class HTTP {
     enum Method: String {
         case get = "GET"
         case post = "POST"
+        case head = "HEAD"
     }
     
     enum Header {

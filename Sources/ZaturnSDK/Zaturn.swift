@@ -68,6 +68,16 @@ public class Zaturn {
         }
     }
     
+    public func checkRecovery(forID id: String, authroizedWith token: String, completion: @escaping (Bool) -> ()) {
+        checkRecoveryParts(forID: id, authorizedWith: token) { available in
+            let groups = available
+                .map { groupMembers in groupMembers.count(matching: { $0 }) }
+                .count { $0 >= self.shareConfiguration.groupMemberThreshold }
+            
+            completion(groups >= self.shareConfiguration.groupThreshold)
+        }
+    }
+    
     public func recover(forID id: String, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
         retrieveRecoveryParts(forID: id, authorizedWith: token) { result in
             guard let parts = result.mapError({ Error($0) }).get(ifFailure: completion) else { return }
@@ -164,6 +174,12 @@ public class Zaturn {
             
             completion(.success(()))
         })
+    }
+    
+    private func checkRecoveryParts(forID id: String, authorizedWith token: String, completion: @escaping ([[Bool]]) -> ()) {
+        nodes.forEachAsync(body: { node, singleCompletion in
+            node.check(numberOfRecoveryParts: self.shareConfiguration.groupMembers, forID: id, authorizedWith: token, completion: singleCompletion)
+        }, completion: completion)
     }
     
     private func retrieveRecoveryParts(forID id: String, authorizedWith token: String, completion: @escaping (Result<[[[UInt8]]], Swift.Error>) -> ()) {
