@@ -63,18 +63,10 @@ struct ZaturnNode {
         }
     }
     
-    func retrieve(numberOfRecoveryParts partsCount: Int, forID id: String, authorizedWith token: String, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
+    func retrieve(numberOfRecoveryParts partsCount: Int, forID id: String, authorizedWith token: String, completion: @escaping ([Result<[UInt8], Swift.Error>]) -> ()) {
         Array((0..<partsCount)).forEachAsync(body: { offset, partCompletion in
             retrieveRecoveryPart(forID: id, withOffset: offset, authorizedWith: token, completion: partCompletion)
-        }, completion: { results in
-            guard results.allSatisfy({ $0.isSuccess }) else {
-                completion(.failure(self.getNodeError(from: results)))
-                return
-            }
-            
-            let parts = results.compactMap { try? $0.get() }
-            completion(.success(parts))
-        })
+        }, completion: completion)
     }
     
     private func retrieveRecoveryPart(forID id: String, withOffset offset: Int, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
@@ -90,13 +82,10 @@ struct ZaturnNode {
     }
     
     private func getNodeError<T>(from results: [Result<T, Swift.Error>]) -> Error {
-        let (offsets, errors) = results.enumerated()
-            .map { (offset, result) in (offset, result.getError()) }
-            .filter { (_, error) in error != nil }
-            .unzip()
-        
-        return Error.nodeFailure(offsets, causedBy: errors.compactMap { $0 })
+        let (offsets, errors) = extractErrorsAndOffsets(from: results)
+        return Error.nodeFailure(offsets, causedBy: errors)
     }
+
     
     // MARK: Type
     
