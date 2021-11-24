@@ -40,3 +40,17 @@ extension Result {
         }
     }
 }
+
+// MARK: Failure == Swift.Error
+
+extension Result where Failure == Swift.Error {
+    func mapOrCatch<NewSuccess>(_ transform: (Success) throws -> NewSuccess) -> Result<NewSuccess, Failure> {
+        flatMap {
+            do {
+                return .success(try transform($0))
+            } catch {
+                return .failure(error)
+            }
+        }
+    }
+}

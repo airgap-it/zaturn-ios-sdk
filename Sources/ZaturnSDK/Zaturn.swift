@@ -79,8 +79,11 @@ public class Zaturn {
     }
     
     public func recover(forID id: String, authorizedWith token: String, completion: @escaping (Result<[UInt8], Swift.Error>) -> ()) {
-        retrieveRecoveryParts(forID: id, authorizedWith: token) { result in
-            guard let parts = result.mapError({ Error($0) }).get(ifFailure: completion) else { return }
+        retrieveRecoveryParts(forID: id, authorizedWith: token) { parts in
+            guard self.groupThresholdMet(for: parts) else {
+                completion(.failure(self.getGroupThresholdNotMetError(from: parts)))
+                return
+            }
             
             do {
                 let secret = try self.restoreSecret(from: parts)
@@ -129,8 +132,9 @@ public class Zaturn {
         }, withThreshold: shareConfiguration.groupThreshold)
     }
     
-    private func restoreSecret(from parts: [[[UInt8]]]) throws -> [UInt8] {
-        try secretSharing.join(parts)
+    private func restoreSecret(from parts: [Result<[Result<[UInt8], Swift.Error>], Swift.Error>]) throws -> [UInt8] {
+        let parts = parts.flatMapSuccess { $0.flatSuccess() }
+        return try secretSharing.join(parts)
     }
     
     private func encryptParts(_ parts: [[UInt8]], for node: ZaturnNode, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
@@ -146,16 +150,16 @@ public class Zaturn {
         }
     }
     
-    private func decryptParts(_ parts: [[UInt8]], for node: ZaturnNode, completion: @escaping (Result<[[UInt8]], Swift.Error>) -> ()) {
+    private func decryptParts(_ parts: [Result<[UInt8], Swift.Error>], for node: ZaturnNode, completion: @escaping ([Result<[UInt8], Swift.Error>]) -> ()) {
         getSessionKey(for: node) { result in
-            guard let sessionKey = result.get(ifFailure: completion) else { return }
-            
-            do {
-                let decrypted = try parts.map { try self.crypto.decrypt($0, with: sessionKey) }
-                completion(.success(decrypted))
-            } catch {
-                completion(.failure(error))
+            let decrypted: [Result<[UInt8], Swift.Error>] = parts.map { part in
+                return part.mapOrCatch {
+                    let sessionKey = try result.get()
+                    return try self.crypto.decrypt($0, with: sessionKey)
+                }
             }
+            
+            completion(decrypted)
         }
     }
     
@@ -182,30 +186,42 @@ public class Zaturn {
         }, completion: completion)
     }
     
-    private func retrieveRecoveryParts(forID id: String, authorizedWith token: String, completion: @escaping (Result<[[[UInt8]]], Swift.Error>) -> ()) {
+    private func retrieveRecoveryParts(forID id: String, authorizedWith token: String, completion: @escaping ([Result<[Result<[UInt8], Swift.Error>], Swift.Error>]) -> ()) {
         nodes.forEachAsync(body: { node, singleCompletion in
-            node.retrieve(numberOfRecoveryParts: self.shareConfiguration.groupMembers, forID: id, authorizedWith: token) { result in
-                guard let encrypted = result.get(ifFailure: singleCompletion) else { return }
-                self.decryptParts(encrypted, for: node, completion: singleCompletion)
+            node.retrieve(numberOfRecoveryParts: self.shareConfiguration.groupMembers, forID: id, authorizedWith: token) { encrypted in
+                self.decryptParts(encrypted, for: node) { decrypted in
+                    guard self.groupMemberThresholdMet(for: decrypted) else {
+                        singleCompletion(.failure(self.getMemberThresholdNotMetError(from: decrypted)))
+                        return
+                    }
+                    singleCompletion(.success(decrypted))
+                }
+                
             }
-        }, completion: { (results: [Result<[[UInt8]], Swift.Error>]) -> () in
-            guard results.allSatisfy({ $0.isSuccess }) else {
-                completion(.failure(self.getNodeError(from: results)))
-                return
-            }
-            
-            let parts = results.compactMap { try? $0.get() }
-            completion(.success((parts)))
-        })
+        }, completion: completion)
+    }
+    
+    private func groupThresholdMet(for parts: [Result<[Result<[UInt8], Swift.Error>], Swift.Error>]) -> Bool {
+        parts.thresholdMet(shareConfiguration.groupThreshold)
+    }
+    
+    private func groupMemberThresholdMet(for decrypted: [Result<[UInt8], Swift.Error>]) -> Bool {
+        decrypted.thresholdMet(shareConfiguration.groupMemberThreshold)
+    }
+    
+    private func getGroupThresholdNotMetError<T>(from results: [Result<T, Swift.Error>]) -> Swift.Error {
+        let (offsets, errors) = extractErrorsAndOffsets(from: results)
+        return Error.groupThresholdNotMet(offsets.map { nodes[$0].id }, causedBy: errors)
+    }
+    
+    private func getMemberThresholdNotMetError<T>(from results: [Result<T, Swift.Error>]) -> Swift.Error {
+        let (offsets, errors) = extractErrorsAndOffsets(from: results)
+        return Error.memberThresholdNotMet(offsets, causedBy: errors)
     }
     
     private func getNodeError<T>(from results: [Result<T, Swift.Error>]) -> Swift.Error {
-        let (offsets, errors) = results.enumerated()
-            .map { (offset, result) in (offset, result.getError()) }
-            .filter { (_, error) in error != nil }
-            .unzip()
-        
-        return Error.node(offsets.map { nodes[$0].id }, causedBy: errors.compactMap { $0 })
+        let (offsets, errors) = extractErrorsAndOffsets(from: results)
+        return Error.node(offsets.map { nodes[$0].id }, causedBy: errors)
     }
     
     // MARK: Types
@@ -226,7 +242,9 @@ public class Zaturn {
         case invalidURL(String)
         
         case groupThresholdExceeded
+        case groupThresholdNotMet([String], causedBy: [Swift.Error])
         case memberThresholdExceeded
+        case memberThresholdNotMet([Int], causedBy: [Swift.Error])
     
         case http(Int)
         case node([String], causedBy: [Swift.Error])
@@ -260,5 +278,13 @@ public class Zaturn {
                 throw Error.memberThresholdExceeded
             }
         }
+    }
+}
+
+// MARK: Extensions
+
+extension Array {
+    func thresholdMet<T, E>(_ threshold: Int) -> Bool where Element == Result<T, E> {
+        count(matching: { $0.isSuccess }) >= threshold
     }
 }
