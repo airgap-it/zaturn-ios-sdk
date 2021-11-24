@@ -54,4 +54,18 @@ extension Array {
             completion(results.compactMap { $0 })
         }
     }
+    
+    func flatSuccess<T, E>() -> [T] where Element == Result<T, E> {
+        compactMap { try? $0.get() }
+    }
+    
+    func flatMapSuccess<T, S, E>(_ transform: (T) -> S) -> [S] where Element == Result<T, E> {
+        compactMap {
+            do {
+                return transform(try $0.get())
+            } catch {
+                return nil
+            }
+        }
+    }
 }
