@@ -22,8 +22,8 @@ public class Zaturn {
         
         let secretSharing = SSKRSecretSharing()
         let shareConfiguration = ShareConfiguration(
-            groups: min(nodes.count, Defaults.minGroups),
-            groupThreshold: configuration.groupThreshold ?? min((nodes.count / 2) + 1, Defaults.minGroupThreshold),
+            groups: max(nodes.count, Defaults.minGroups),
+            groupThreshold: configuration.groupThreshold ?? max((nodes.count / 2) + 1, Defaults.minGroupThreshold),
             groupMembers: configuration.groupMembers ?? Defaults.minGroupMembers,
             groupMemberThreshold: configuration.groupMemberThreshold ?? Defaults.minGroupMemberThreshold
         )
