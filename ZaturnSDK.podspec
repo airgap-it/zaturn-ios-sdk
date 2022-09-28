@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name                  = "ZaturnSDK"
-  spec.version               = "0.0.8"
+  spec.version               = "0.0.9"
   spec.summary               = "."
   spec.homepage              = "https://github.com/airgap-it/zaturn-ios-sdk"
   spec.license               = { :type => "MIT", :file => "LICENSE" }
@@ -10,7 +10,7 @@ Pod::Spec.new do |spec|
   spec.source                = { :git => "https://github.com/airgap-it/zaturn-ios-sdk", :tag => "#{spec.version}" }
   spec.source_files          = "Sources/**/*.{swift}"
   spec.dependency            'Sodium', '~> 0.9.1'
-  spec.dependency            'SwiftySSS', '~> 0.0.1'
+  spec.dependency            'ShamirSecretShare', '~> 1.0.1'
   spec.dependency            'AdvancedGoogleSignIn', '~> 6.0.0'
   
   spec.compiler_flags        = '-Xswiftc COCOAPODS'

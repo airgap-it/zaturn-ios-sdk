@@ -13,9 +13,9 @@ struct SSKRSecretSharing: SecretSharing {
     private static let minGroups: Int = 1
     private static let maxGroups: Int = 16
     
-    private let shamir: Shamir
+    private let shamir: SPMShamir
     
-    init(shamir: Shamir = ShamirCreator.create()) {
+    init(shamir: SPMShamir = SPMShamir()) {
         self.shamir = shamir
     }
     
